@@ -1,8 +1,11 @@
+import 'package:expense_tracker_v2/model/expense.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class AddExpense extends StatefulWidget {
-  const AddExpense({super.key});
+  const AddExpense({super.key, required this.onNewExpense});
+
+  final void Function(Expense expense) onNewExpense;
 
   @override
   State<StatefulWidget> createState() {
@@ -13,6 +16,7 @@ class AddExpense extends StatefulWidget {
 class _AddExpenseState extends State<AddExpense> {
   final _titleController = TextEditingController();
   final _costController = TextEditingController();
+  Category _selectedCategory = Category.food;
   DateTime? selectedDate;
 
   @override
@@ -20,6 +24,41 @@ class _AddExpenseState extends State<AddExpense> {
     _titleController.dispose();
     _costController.dispose();
     super.dispose();
+  }
+
+  void _submitNewExpense() {
+    double? amount = double.tryParse(_costController.text);
+    var title = _titleController.text.trim();
+
+    if (amount == null || title.isEmpty || selectedDate == null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Invalid Input'),
+          content: const Text(
+            'Please make sure a valid title amount, data and category is entered',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: Text("Okay"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    widget.onNewExpense(
+      Expense(
+        title: title,
+        amount: amount,
+        category: _selectedCategory,
+        dateTime: selectedDate!,
+      ),
+    );
+    Navigator.pop(context);
   }
 
   void _showDatePickerMondal() async {
@@ -79,6 +118,25 @@ class _AddExpenseState extends State<AddExpense> {
           ),
           Row(
             children: [
+              DropdownButton(
+                value: _selectedCategory,
+                items: Category.values
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: item,
+                        child: Text(item.name.toUpperCase()),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (valuse) {
+                  if (valuse == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedCategory == valuse;
+                  });
+                },
+              ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
@@ -88,8 +146,7 @@ class _AddExpenseState extends State<AddExpense> {
               Spacer(),
               OutlinedButton(
                 onPressed: () {
-                  print(_titleController.text);
-                  print(_costController.text);
+                  _submitNewExpense();
                 },
                 child: Text("Save Expense"),
               ),

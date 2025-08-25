@@ -1,5 +1,6 @@
 import 'package:expense_tracker_v2/model/expense.dart';
 import 'package:expense_tracker_v2/widgets/add_expense.dart';
+import 'package:expense_tracker_v2/widgets/chart/chart.dart';
 import 'package:expense_tracker_v2/widgets/expenses_list/expenses_list.dart';
 import 'package:flutter/material.dart';
 
@@ -40,8 +41,39 @@ class _ExpensesState extends State<Expenses> {
     ),
   ];
 
+  _addANewExpense(Expense expense) {
+    setState(() {
+      expenses.add(expense);
+    });
+  }
+
   _showAddExpenseMondal() {
-    showModalBottomSheet(context: context, builder: (ctx) => AddExpense());
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (ctx) => AddExpense(onNewExpense: _addANewExpense),
+    );
+  }
+
+  void _removeExpense(Expense expense) {
+    final index = expenses.indexOf(expense);
+    setState(() {
+      expenses.remove(expense);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: 3),
+        content: Text("Expense removed"),
+        action: SnackBarAction(
+          label: "Undo",
+          onPressed: () {
+            setState(() {
+              expenses.insert(index, expense);
+            });
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -55,8 +87,8 @@ class _ExpensesState extends State<Expenses> {
       ),
       body: Column(
         children: [
-          Text("data"),
-          Expanded(child: ExpensesList(expenses)),
+          Chart(expenses: expenses),
+          Expanded(child: ExpensesList(expenses, _removeExpense)),
         ],
       ),
     );
